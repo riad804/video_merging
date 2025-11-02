@@ -28,9 +28,9 @@ void main() async {
 
 Future<void> requestStoragePermissionIfNeeded() async {
   if (Platform.isAndroid) {
-    // if (await Permission.manageExternalStorage.isDenied) {
-    //   await Permission.manageExternalStorage.request();
-    // }
+    if (await Permission.manageExternalStorage.isDenied) {
+      await Permission.manageExternalStorage.request();
+    }
     if (await Permission.storage.isDenied) {
       await Permission.storage.request();
     }

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:compare_ai_demo/views/dual_video_view.dart';
 import 'package:flutter/material.dart';
@@ -191,9 +192,9 @@ class _HomePageState extends State<HomePage> {
                       onPressed: () async {
                         bool result = await bloc.generateVideo(Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.width));
                         if (result) {
-                          print("success");
+                          log("success");
                         } else {
-                          print("failed");
+                          log("failed");
                         }
                       },
                       child: Text("Save to Gallery"),

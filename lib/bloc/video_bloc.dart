@@ -89,7 +89,6 @@ class VideoBloc {
         isVertical: _isVertical.value,
         width: size.width.toInt(),
         height: size.height.toInt(),
-        loopShorter: false,
       );
       debugPrint('Merged file at: $outputPath');
       await GallerySaver.saveVideo(outputPath);

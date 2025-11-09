@@ -190,7 +190,7 @@ class _HomePageState extends State<HomePage> {
 
                   ElevatedButton(
                       onPressed: () async {
-                        bool result = await bloc.generateVideo(Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.width));
+                        bool result = await bloc.generateVideo();
                         if (result) {
                           log("success");
                         } else {

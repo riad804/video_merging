@@ -16,6 +16,8 @@ class VideoBloc {
 
   final _isVertical = BehaviorSubject<bool>.seeded(true);
 
+  final _outPutVideoSize = BehaviorSubject<Size>();
+
   late String _video1Path;
   late String _video2Path;
 
@@ -38,6 +40,10 @@ class VideoBloc {
   void toggleLayout() => _isVertical.add(!_isVertical.value);
   void setVertical() => _isVertical.add(true);
   void setPortrait() => _isVertical.add(false);
+
+  void setOutputVideoSize(double height, double width) {
+    _outPutVideoSize.add(Size(width, height));
+  }
 
   Future<void> setVideo1(File file) async {
     _video1Path = file.path;
@@ -81,14 +87,14 @@ class VideoBloc {
     _chewie2Controller.add(chewieController);
   }
 
-  Future<bool> generateVideo(Size size) async {
+  Future<bool> generateVideo() async {
     try {
       final outputPath = await VideoMerger.mergeVideos(
         video1: File(_video1Path),
         video2: File(_video2Path),
         isVertical: _isVertical.value,
-        width: size.width.toInt(),
-        height: size.height.toInt(),
+        width: _outPutVideoSize.value.width.toInt(),
+        height: _outPutVideoSize.value.height.toInt(),
       );
       debugPrint('Merged file at: $outputPath');
       await GallerySaver.saveVideo(outputPath);

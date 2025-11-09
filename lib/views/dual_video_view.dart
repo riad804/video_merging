@@ -58,27 +58,32 @@ class _DualVideoViewState extends State<DualVideoView> {
 
   Widget _buildPlayer(ChewieController? controller, int index) {
     if (controller == null) {
-      print("controller null");
-      return GestureDetector(
-        onTap: () async {
-          if (index == 1) {
-            _pickVideo(index);
-          } else {
-            _pickVideo(index);
-          }
-        },
-        child: Container(
-          color: Colors.white70,
-          width: double.maxFinite,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Add Video'),
-              Icon(Icons.add, size: 24),
-            ],
-          ),
-        ),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final height = constraints.maxHeight;
+          final width = constraints.maxWidth;
+          return GestureDetector(
+            onTap: () async {
+              if (index == 1) {
+                _pickVideo(index);
+              } else {
+                _pickVideo(index);
+              }
+            },
+            child: Container(
+              color: Colors.white70,
+              width: width,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Add Video'),
+                  Icon(Icons.add, size: 24),
+                ],
+              ),
+            ),
+          );
+        }
       );
     }
 
@@ -200,8 +205,6 @@ class _DualVideoViewState extends State<DualVideoView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.width,
-      width: double.maxFinite,
       decoration: BoxDecoration(
         color: Color(0xFF121212),
       ),
@@ -213,38 +216,50 @@ class _DualVideoViewState extends State<DualVideoView> {
           return AnimatedSwitcher(
             duration: const Duration(milliseconds: 500),
             transitionBuilder: (child, animation) => RotationTransition(turns: animation, child: child),
-            child: StreamBuilder(
-              stream: Rx.combineLatest2(
-                widget.bloc.chewie1Stream.startWith(null),
-                widget.bloc.chewie2Stream.startWith(null),
-                  (v1, v2) => [v1, v2],
+            child: AspectRatio(
+              aspectRatio: isVertical ? 7/5 : 16/9,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final height = constraints.maxHeight;
+                  final width = constraints.maxWidth;
+                  debugPrint("height: $height ======== width: $width");
+                  widget.bloc.setOutputVideoSize(height, width);
+
+                  return StreamBuilder(
+                    stream: Rx.combineLatest2(
+                      widget.bloc.chewie1Stream.startWith(null),
+                      widget.bloc.chewie2Stream.startWith(null),
+                        (v1, v2) => [v1, v2],
+                    ),
+                    builder: (ctx, snap) {
+                      final controllers = snap.data ?? [null, null];
+                      final v1 = controllers[0];
+                      final v2 = controllers[1];
+
+                      final player1 = _buildPlayer(v1, 1);
+                      final player2 = _buildPlayer(v2, 2);
+
+                      return isVertical
+                          ? Column(
+                        key: const ValueKey('vertical'),
+                        children: [
+                          Expanded(child: player1),
+                          const SizedBox(height: 4),
+                          Expanded(child: player2),
+                        ],
+                      )
+                          : Row(
+                        key: const ValueKey('horizontal'),
+                        children: [
+                          Expanded(child: player1),
+                          const SizedBox(width: 4),
+                          Expanded(child: player2),
+                        ],
+                      );
+                    },
+                  );
+                }
               ),
-              builder: (ctx, snap) {
-                final controllers = snap.data ?? [null, null];
-                final v1 = controllers[0];
-                final v2 = controllers[1];
-
-                final player1 = _buildPlayer(v1, 1);
-                final player2 = _buildPlayer(v2, 2);
-
-                return isVertical
-                    ? Column(
-                  key: const ValueKey('vertical'),
-                  children: [
-                    Expanded(child: player1),
-                    const SizedBox(height: 4),
-                    Expanded(child: player2),
-                  ],
-                )
-                    : Row(
-                  key: const ValueKey('horizontal'),
-                  children: [
-                    Expanded(child: player1),
-                    const SizedBox(width: 4),
-                    Expanded(child: player2),
-                  ],
-                );
-              },
             ),
           );
         },

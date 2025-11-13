@@ -129,8 +129,12 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: Text("Compare AI Demo"),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
         child: Column(
           children: [
             DualVideoView(bloc: bloc), // Your DualVideoView should use ChewieControllers

@@ -18,6 +18,9 @@ class DualVideoView extends StatefulWidget {
 }
 
 class _DualVideoViewState extends State<DualVideoView> {
+  final _key = GlobalKey();
+
+
   Timer? _overlayTimer1;
   final _overlayVisible1 = ValueNotifier<bool>(true);
 
@@ -204,66 +207,76 @@ class _DualVideoViewState extends State<DualVideoView> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Color(0xFF121212),
-      ),
-      child: StreamBuilder(
-        stream: widget.bloc.isVerticalStream,
-        initialData: true,
-        builder: (ctx, snap) {
-          final isVertical = snap.data ?? true;
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            transitionBuilder: (child, animation) => RotationTransition(turns: animation, child: child),
-            child: AspectRatio(
-              aspectRatio: isVertical ? 7/5 : 16/9,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final height = constraints.maxHeight;
-                  final width = constraints.maxWidth;
-                  debugPrint("height: $height ======== width: $width");
-                  widget.bloc.setOutputVideoSize(height, width);
-
-                  return StreamBuilder(
-                    stream: Rx.combineLatest2(
-                      widget.bloc.chewie1Stream.startWith(null),
-                      widget.bloc.chewie2Stream.startWith(null),
-                        (v1, v2) => [v1, v2],
-                    ),
-                    builder: (ctx, snap) {
-                      final controllers = snap.data ?? [null, null];
-                      final v1 = controllers[0];
-                      final v2 = controllers[1];
-
-                      final player1 = _buildPlayer(v1, 1);
-                      final player2 = _buildPlayer(v2, 2);
-
-                      return isVertical
-                          ? Column(
-                        key: const ValueKey('vertical'),
-                        children: [
-                          Expanded(child: player1),
-                          const SizedBox(height: 4),
-                          Expanded(child: player2),
-                        ],
-                      )
-                          : Row(
-                        key: const ValueKey('horizontal'),
-                        children: [
-                          Expanded(child: player1),
-                          const SizedBox(width: 4),
-                          Expanded(child: player2),
-                        ],
-                      );
-                    },
-                  );
-                }
-              ),
+    return StreamBuilder(
+      stream: widget.bloc.isVerticalStream,
+      initialData: true,
+      builder: (ctx, snap) {
+        final isVertical = snap.data ?? true;
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          transitionBuilder: (child, animation) => RotationTransition(turns: animation, child: child),
+          child: StreamBuilder(
+            stream: Rx.combineLatest2(
+              widget.bloc.chewie1Stream.startWith(null),
+              widget.bloc.chewie2Stream.startWith(null),
+                  (v1, v2) => [v1, v2],
             ),
-          );
-        },
-      ),
+            builder: (ctx, snap) {
+              final controllers = snap.data ?? [null, null];
+              final v1 = controllers[0];
+              final v2 = controllers[1];
+
+              final player1 = _buildPlayer(v1, 1);
+              final player2 = _buildPlayer(v2, 2);
+
+              final playerWidgets = [
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: AspectRatio(
+                    aspectRatio: isVertical ? 7 / 5 : 9 / 16,
+                    child: player1,
+                  ),
+                ),
+                isVertical
+                    ? const SizedBox(height: 4)
+                    : const SizedBox(width: 4),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: AspectRatio(
+                    aspectRatio: isVertical ? 7 / 5 : 9 / 16,
+                    child: player2,
+                  ),
+                ),
+              ];
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final renderBox =
+                _key.currentContext?.findRenderObject() as RenderBox?;
+                if (renderBox != null) {
+                  final size = renderBox.size;
+                  debugPrint('height: ${size.height} width: ${size.width}');
+                  widget.bloc.setOutputVideoSize(size.height, size.width);
+                }
+              });
+
+              return Container(
+                key: _key,
+                child: isVertical
+                    ? Column(
+                  key: const ValueKey('vertical'),
+                  mainAxisSize: MainAxisSize.min,
+                  children: playerWidgets,
+                )
+                    : Row(
+                  key: const ValueKey('horizontal'),
+                  mainAxisSize: MainAxisSize.min,
+                  children: playerWidgets,
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
